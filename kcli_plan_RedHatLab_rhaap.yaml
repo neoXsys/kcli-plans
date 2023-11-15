@@ -1,0 +1,209 @@
+# kcli plan to create Red Hat Ansible Automation Platform (rhaap) at Red Hat Lab (redhat.lab)
+
+## Plan Variables
+parameters:
+  plan: redhat.lab
+  domain: redhat.lab
+  domain_network_name: redhat.lab
+  domain_ip: 10.10.10.1
+  domain_cidr: 10.10.10.0/24
+  image_name: rhel-93
+  # Get Red Hat Enterprise Linux KVM Guest Image: https://access.redhat.com/downloads/content/rhel
+  image_url: _RHEL_IMAGE_URL_ 
+  rhnuser: _RHN_USER_
+  rhnpassword: _RHN_PASSWORD_
+  rootpassword: redhat
+  password: redhat
+
+## Create dedicated network (redhat.lab) & domain (redhat.lab)
+{{ domain_network_name }}:
+  plan: {{ plan }}
+  name: {{ domain_network_name }}
+  type: network
+  domain: {{ domain }}
+  cidr: {{ domain_cidr }}
+  dhcp: true
+
+## Create dns entry for network (redhat.lab)
+infra:
+  plan: {{ plan }}
+  name: infra
+  type: dns
+  net: {{ domain_network_name }}
+  ip: {{ domain_ip  }}
+
+## Create or attach libvirt default pool 
+default:
+  name: default
+  type: pool
+  path: /var/lib/libvirt/images
+
+## Upload Red Hat Enterprise Linux (rhel) Image
+{{ image_name  }}:
+  plan: {{ plan }}
+  name: {{ image_name }}
+  type: image
+  url: {{ image_url }}
+
+## Create VMs Profile
+
+### Profile for Red Hat Ansible Automation Platform (rhaap) VMs / Nodes
+rhel-92-c4m16d100:
+  plan: {{ plan }}
+  name: rhel-92-c4m16d100
+  type: profile
+  pool: default
+  image: {{ image_name  }}
+  uefi_legacy: true
+  numcpus: 4
+  memory: 16000
+  disks:
+  - size: 100
+  # Require manual IP entry in each VM defination
+  reserveip: true
+  # Require to create /etc/hosts entries on libvirt / KVM Virtualization host
+  reservehost: true
+  # Require dhcp on network
+  reservedns: true
+  sharedkey: true
+  rhnuser: {{ rhnuser }}
+  rhnpassword: {{ rhnpassword }}
+  yamlinventory: true
+  enableroot: true
+  rootpassword: {{ rootpassword }}
+  cmds:
+  - echo {{ password | default('r3dh4t1!') }} | passwd --stdin cloud-user
+  - dnf install ansible-core -y
+  - echo -e "server {{ domain_ip  }} iburst\ndriftfile /var/lib/chrony/drift\nmakestep 1.0 3\nrtcsync\nkeyfile /etc/chrony.keys\nleapsectz right/UTC\nlogdir /var/log/chrony" > /etc/chrony.conf
+  - systemctl restart chronyd
+
+### Profile for Red Hat Ansible Automation Platform (rhaap) VMs / Nodes
+rhel-92-c4m8d100:
+  plan: {{ plan }}
+  name: rhel-92-c4m8d100
+  type: profile
+  pool: default
+  image: {{ image_name  }}
+  uefi_legacy: true
+  numcpus: 4
+  memory: 8000
+  disks:
+  - size: 100
+  # Require manual IP entry in each VM defination
+  reserveip: true
+  # Require to create /etc/hosts entries on libvirt / KVM Virtualization host
+  reservehost: true
+  # Require dhcp on network
+  reservedns: true
+  sharedkey: true
+  rhnuser: {{ rhnuser }}
+  rhnpassword: {{ rhnpassword }}
+  yamlinventory: true
+  enableroot: true
+  rootpassword: {{ rootpassword }}
+  cmds:
+  - echo {{ password | default('r3dh4t1!') }} | passwd --stdin cloud-user
+  - dnf install ansible-core -y
+  - echo -e "server {{ domain_ip  }} iburst\ndriftfile /var/lib/chrony/drift\nmakestep 1.0 3\nrtcsync\nkeyfile /etc/chrony.keys\nleapsectz right/UTC\nlogdir /var/log/chrony" > /etc/chrony.conf
+  - systemctl restart chronyd
+
+## Create VMs for Red Hat Ansible Automation Platform (rhaap) 
+
+### Red Hat Ansible Automation Platform (rhaap) - Bastion Node
+bastion-rhaap:
+  plan: {{ plan }}
+  name: bastion-rhaap
+  uuid: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa1010
+  profile: rhel-92-c4m8d100
+  nets:
+  - name: {{ domain_network_name }}
+    mac: aa:aa:aa:aa:10:10
+    ip: 10.10.10.10
+
+### Red Hat Ansible Automation Platform (rhaap) - Controller (ctrl)
+ctrl-1-rhaap:
+  plan: {{ plan }}
+  name: ctrl-1-rhaap
+  uuid: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa1011
+  profile: rhel-92-c4m16d100
+  nets:
+  - name: {{ domain_network_name }}
+    mac: aa:aa:aa:aa:10:11
+    ip: 10.10.10.11
+
+### Red Hat Ansible Automation Platform (rhaap) - Private Automation Hub (pah)
+pah-1-rhaap:
+  plan: {{ plan }}
+  name: pah-1-rhaap
+  uuid: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa1021
+  profile: rhel-92-c4m16d100
+  nets:
+  - name: {{ domain_network_name }}
+    mac: aa:aa:aa:aa:10:21
+    ip: 10.10.10.21
+
+### Red Hat Ansible Automation Platform (rhaap) - Execution Environment (ee)
+ee-1-rhaap:
+  plan: {{ plan }}
+  name: ee-1-rhaap
+  uuid: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa1031
+  profile: rhel-92-c4m8d100
+  nets:
+  - name: {{ domain_network_name }}
+    mac: aa:aa:aa:aa:10:31
+    ip: 10.10.10.31
+
+### Red Hat Ansible Automation Platform (rhaap) - Event Driven Automation (eda) Controller
+eda-1-rhaap:
+  plan: {{ plan }}
+  name: eda-1-rhaap
+  uuid: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa1041
+  profile: rhel-92-c4m16d100
+  nets:
+  - name: {{ domain_network_name }}
+    mac: aa:aa:aa:aa:10:41
+    ip: 10.10.10.41
+
+### Red Hat Ansible Automation Platform (rhaap) - Centralized Database For Controller, Private Automation Hub (pah) & Event Driven Automation (eda) Nodes
+data-rhaap:
+  plan: {{ plan }}
+  name: data-rhaap
+  uuid: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa1050
+  profile: rhel-92-c4m16d100
+  nets:
+  - name: {{ domain_network_name }}
+    mac: aa:aa:aa:aa:10:50
+    ip: 10.10.10.50
+
+### Red Hat Ansible Automation Platform (rhaap) - Test Node - 1
+node-1-rhaap:
+  plan: {{ plan }}
+  name: node-1-rhaap
+  uuid: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa1051
+  profile: rhel-92-c4m8d100
+  nets:
+  - name: {{ domain_network_name }}
+    mac: aa:aa:aa:aa:10:51
+    ip: 10.10.10.51
+
+### Red Hat Ansible Automation Platform (rhaap) - Test Node - 2
+node-2-rhaap:
+  plan: {{ plan }}
+  name: node-2-rhaap
+  uuid: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa1052
+  profile: rhel-92-c4m8d100
+  nets:
+  - name: {{ domain_network_name }}
+    mac: aa:aa:aa:aa:10:52
+    ip: 10.10.10.52
+
+### Red Hat Ansible Automation Platform (rhaap) - Test Node - 3
+node-3-rhaap:
+  plan: {{ plan }}
+  name: node-3-rhaap
+  uuid: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa1053
+  profile: rhel-92-c4m8d100
+  nets:
+  - name: {{ domain_network_name }}
+    mac: aa:aa:aa:aa:10:53
+    ip: 10.10.10.53
