@@ -1,4 +1,6 @@
-### Red Hat Ansible Automation Platform Infra Using kcli 
+### Hybrid Infra Management Tool - kcli 
+#### Example: Red Hat Ansible Automation Platform on KVM Infra Provider via kcli 
+- **NOTE: kcli plan can be used for other cloud infra provider**
 #### Baremetal Node Information (TESTED):
 * Dell R440 | 40 Core Cpu | 256 GB Ram
 * HOST OS: RHEL 8.8 
@@ -82,4 +84,33 @@ Listing Networks...
 | redhat.lab | routed | 10.10.10.0/24 | True | redhat.lab | nat  |
 +------------+--------+---------------+------+------------+------+
 [root@dell-r440-10 RH_AAP_CLUSTER]#
+```
+### Administraiton tasks: 
+#### Generate ansible inventory with password
+- **NOTE: kcli plan has already created ansible inventory without password under /tmp/redhat.lab.inv**
+```
+plan=redhat.lab
+kcli list vms | grep "$plan" | awk -F'[ | ]+' -v OFS="\t" 'BEGIN{print "[${plan}]"};{print $2"."$6,"ansible_connection=ssh","ansible_user=cloud-user","ansible_password=r3dh4t1!","ansible_host="$4}' > $plan.inventory
+```
+#### Set root & cloud-user password to all node
+- **NOTE: You can share host ssh keys using "sharedkey: true" in vm defination**
+```
+ansible all -i $plan.inventory -m shell -a "echo r3dh4t1! | passwd --stdin cloud-user" -b
+ansible all -i $plan.inventory -m shell -a "echo r3dh4t1! | passwd --stdin root" -b
+```
+#### Generate the /etc/hosts file from kcli plan. 
+- **NOTE: You can also add /etc/hosts entries of the nodes by adding "reservehost: true" in VM defination.**
+```
+plan=redhat.lab
+kcli list vms | grep "$plan" | awk -F'[ | ]+' -v OFS="\t" '{print $4,$2}' >> /etc/hosts
+```
+#### Verification tasks from host:
+```
+plan=redhat.lab
+for i in `kcli list vms -o name` ; do ping -c1 $i ; done
+ansible all -i $plan.inventory -m shell -a "id"  --ssh-common-args='-o StrictHostKeyChecking=no'
+ansible all -i $plan.inventory -m shell -a "id"  -b  --ssh-common-args='-o StrictHostKeyChecking=no'
+ansible all -i $plan.inventory -m shell -a "which ansible" -b --ssh-common-args='-o StrictHostKeyChecking=no'
+ansible all -i $plan.inventory -m shell -a "chronyc tracking | grep Reference"  -b  --ssh-common-args='-o StrictHostKeyChecking=no'
+ansible all -i $plan.inventory -m shell -a "ping -c1 cdn.redhat.com"  -b  --ssh-common-args='-o StrictHostKeyChecking=no'
 ```
