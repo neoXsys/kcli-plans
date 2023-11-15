@@ -8,7 +8,7 @@
 * **NOTE: Tested using root permisions only.**
 #### Register RHEL Node:
 ```
-subscription-manager register --username rhn-support-hdalwadi
+subscription-manager register --username _RHN_USERNAME_
 ```
 ### Update the RHEL node with latest updates, basic utility packages & ssh key gneration: 
 ```
@@ -50,7 +50,7 @@ dnf -y install kcli
 ```
 ### Create Red Hat Ansible Automation Platform (rhaap) at Red Hat Lab (redhat.lab):
 ```
-kcli create plan -f kcli_plan_RedHatLab_rhaap.yaml -A -P image_url="_RHEL_IMAGE_URL_" -P  rhnuser="_RHN_USER_" -P rhnpassword="_RHN_PASSWORD_"
+kcli create plan redhat.lab -f kcli_plan_RedHatLab_rhaap.yaml -A -P image_url="_RHEL_IMAGE_URL_" -P  rhnuser="_RHN_USER_" -P rhnpassword="_RHN_PASSWORD_"
 ```
 #### Expected execution output:
 ```
