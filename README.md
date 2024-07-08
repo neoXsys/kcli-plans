@@ -12,12 +12,17 @@
 ```
 subscription-manager register --username _RHN_USERNAME_
 ```
-### Update the RHEL node with latest updates, basic utility packages & ssh key gneration: 
+#### Update the RHEL node with latest updates, basic utility packages & ssh key gneration: 
 ```
 dnf update -y
-dnf install tmux mc podman-docker bash-completion vim jq tar git  -y
+dnf install tmux mc podman-docker bash-completion vim jq tar git yum-utils  -y
 ssh-keygen
 ```
+### Check if reboot requires or not
+```
+needs-restarting -r
+```
+- **NOTE: # More information: https://access.redhat.com/solutions/27943**
 #### Install libvirt (KVM Virtualization):
 ```
 yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm
