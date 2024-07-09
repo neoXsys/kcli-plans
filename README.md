@@ -28,7 +28,8 @@ needs-restarting -r
 yum -y install libvirt libvirt-daemon-driver-qemu qemu-kvm
 usermod -aG qemu,libvirt $(id -un)
 newgrp libvirt
-systemctl enable --now libvirtd 
+systemctl enable --now libvirtd
+systemctl status libvirtd
 ```
 #### Install Local NTP Server:
 ```
@@ -58,6 +59,10 @@ systemctl enable chronyd --now
 ```
 dnf -y copr enable karmab/kcli
 dnf -y install kcli
+```
+#### Configure default pool for kcli:
+```
+kcli create pool -p /var/lib/libvirt/images default
 ```
 ### Create Red Hat Ansible Automation Platform (rhaap) at Red Hat Lab (redhat.lab):
 ```
