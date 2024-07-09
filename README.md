@@ -18,7 +18,7 @@ dnf update -y
 dnf install tmux mc podman-docker bash-completion vim jq tar git yum-utils  -y
 ssh-keygen
 ```
-### Check if reboot requires or not
+#### Check if reboot requires or not
 ```
 needs-restarting -r
 ```
@@ -30,10 +30,12 @@ usermod -aG qemu,libvirt $(id -un)
 newgrp libvirt
 systemctl enable --now libvirtd 
 ```
-#### Configure NTP Server (chrony):
+#### Install Local NTP Server:
 ```
 dnf install chrony -y
-
+```
+#### Configure NTP Server (chrony):
+```
 cat <EOF> /etc/chrony.conf
 server 0.rhel.pool.ntp.org iburst
 server 1.rhel.pool.ntp.org iburst
@@ -47,7 +49,9 @@ logdir /var/log/chrony
 bindcmdaddress ::
 allow all
 EOF
-
+```
+#### Enable Local NTP Service:
+```
 systemctl enable chronyd --now
 ```
 #### Install [kcli](https://kcli.readthedocs.io/en/latest/) - Hybrid Infra Management Toolchain:
