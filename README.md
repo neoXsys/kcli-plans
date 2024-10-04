@@ -103,8 +103,8 @@ Listing Networks...
 #### Generate ansible inventory with password
 - **NOTE: kcli plan has already created ansible inventory without password under /tmp/redhat.lab.inv**
 ```
-plan=redhat.lab
-kcli list vms | grep "$plan" | awk -F'[ | ]+' -v OFS="\t" 'BEGIN{print "[${plan}]"};{print $2"."$6,"ansible_connection=ssh","ansible_user=cloud-user","ansible_password=r3dh4t1!","ansible_host="$4}' > $plan.inventory
+PLAN="redhat.lab"
+kcli list vms | grep "${PLAN}" | awk -F'[ | ]+' -v OFS="\t" -v ANSIBLE_GROUP="$PLAN" 'BEGIN{print "["ANSIBLE_GROUP"]"};{print $2"."$6,"ansible_connection=ssh","ansible_user=cloud-user","ansible_password=redhat","ansible_host="$4,"ansible_host_key_checking=false"}' > $PLAN.inventory
 ```
 #### Set root & cloud-user password to all node
 - **NOTE: You can share host ssh keys using "sharedkey: true" in vm defination**
